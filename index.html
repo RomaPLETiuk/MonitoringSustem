@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Моніторинг довкілля — Затишшя</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+  <style>
+    :root {
+      --bg: #f2f5f8;
+      --text: #333;
+      --brand-1: #1d976c;
+      --brand-2: #93f9b9;
+      --card: #fff;
+      --muted: #6b7280;
+      --shadow: 0 6px 18px rgba(0,0,0,0.08);
+      --radius: 14px;
+      --sel: #d1fae5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Inter, system-ui, Arial, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+      color: white; padding: 20px 16px; text-align: center;
+    }
+    header h1 { margin: 4px 0 8px; font-weight: 700; }
+    #lastUpdate { opacity: 0.95; }
+
+    .container { width: min(1100px, 95%); margin: 16px auto 24px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      background: #e8f6ef; border-radius: 12px; padding: 8px;
+      box-shadow: var(--shadow);
+    }
+    .tab-btn {
+      padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer;
+      background: transparent; color: #0b5138; font-weight: 600;
+    }
+    .tab-btn.active { background: #ffffff; color: var(--brand-1); box-shadow: var(--shadow); }
+    .tab-content { display: none; padding: 18px; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 14px; box-shadow: var(--shadow); text-align: center;
+      transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, outline-color .12s ease;
+      cursor: default;
+    }
+    .metric-card { cursor: pointer; outline: 2px solid transparent; }
+    .metric-card:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .metric-card.selected { background: var(--sel); outline-color: #34d399; }
+
+    .card .label { color: var(--muted); font-size: 13px; }
+    .card .value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+
+    .good { color: #16a34a; } .medium { color: #eab308; } .bad { color: #ef4444; }
+
+    .section-title {
+      margin: 6px 0 14px; font-weight: 700; font-size: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .wrap { display: grid; gap: 16px; grid-template-columns: 1.2fr 1fr; }
+    @media (max-width: 1024px) { .wrap { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; }
+
+    .chart-panel-header {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      margin: 0 0 8px;
+    }
+    .chart-title { font-weight: 700; }
+    .chart-sub { color: var(--muted); font-size: 12px; }
+
+    canvas { max-width: 100%; height: 340px !important; border-radius: 10px; }
+
+    /* Map */
+    #map { height: 440px; border-radius: var(--radius); box-shadow: var(--shadow); }
+
+    footer {
+      margin-top: auto; background: var(--brand-1); color: white;
+      text-align: center; padding: 12px; font-size: 14px;
+    }
+    footer .small { font-size: 12px; opacity: 0.9; }
+
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .error {
+      background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid #fecaca;
+    }
+    .loader { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--brand-1);
+      animation: blink 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    .legend {
+      display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted);
+    }
+    .legend .chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: #f3f4f6; border-radius: 999px;
+    }
+    .legend .dot-chip { width: 10px; height: 10px; border-radius: 999px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌍 Моніторинг довкілля — Затишшя</h1>
+    <div id="lastUpdate">Станом на: —</div>
+  </header>
+
+  <div class="container">
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="panel" role="tab" aria-selected="true">📊 Панель</button>
+      <button class="tab-btn" data-tab="weather" role="tab">🌦️ Погода</button>
+      <button class="tab-btn" data-tab="air" role="tab">🧪 Якість повітря</button>
+      <button class="tab-btn" data-tab="map" role="tab">🗺️ Мапа</button>
+    </div>
+
+    <!-- ====== TAB: Panel (Overview) ====== -->
+    <section id="tab-panel" class="tab-content active" role="tabpanel">
+      <div class="wrap">
+        <div class="panel">
+          <div class="section-title">Зведення (поточні дані)</div>
+          <div id="panel-cards" class="cards">
+            <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Завантаження…</div>
+          </div>
+          <div class="hint">Порада: на вкладках «Погода» та «Якість повітря» клацай по картках, щоб побачити відповідний графік за найближчі 24 години.</div>
+        </div>
+        <div class="panel">
+          <div class="section-title">Пояснення індикаторів</div>
+          <div class="legend">
+            <span class="chip"><span class="dot-chip" style="background:#16a34a"></span>Добре</span>
+            <span class="chip"><span class="dot-chip" style="background:#eab308"></span>Середнє</span>
+            <span class="chip"><span class="dot-chip" style="background:#ef4444"></span>Погано</span>
+          </div>
+          <ul>
+            <li><b>AQI</b>: 1–2 добре, 3 середнє, 4–5 погано.</li>
+            <li><b>PM2.5</b>: &lt;12 — добре, 12–35 — нормально, &gt;35 — погано.</li>
+            <li><b>PM10</b>: &lt;50 — добре, 50–100 — нормально, &gt;100 — погано.</li>
+            <li><b>Вітер</b>: 0–5 м/с — легкий, &gt;10 м/с — сильний.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== TAB: Weather ====== -->
+    <section id="tab-weather" class="tab-content" role="tabpanel">
+      <div class="wrap">
+        <div class="panel">
+          <div class="section-title">Поточна погода</div>
+          <div id="weather-cards" class="cards">
+            <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Завантаження…</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="chart-panel-header">
+            <div class="chart-title" id="weatherChartTitle">Графік: —</div>
+            <div class="chart-sub" id="weatherChartSub">Клацніть по картці вище, щоб показати графік</div>
+          </div>
+          <canvas id="weatherChart"></canvas>
+          <div class="hint">Дані з OpenWeather «5 day / 3 hour». Відображено найближчі ~24 години (8 точок, крок 3 год).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== TAB: Air Quality ====== -->
+    <section id="tab-air" class="tab-content" role="tabpanel">
+      <div class="wrap">
+        <div class="panel">
+          <div class="section-title">Поточні показники якості повітря</div>
+          <div id="air-cards" class="cards">
+            <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Завантаження…</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="chart-panel-header">
+            <div class="chart-title" id="airChartTitle">Графік: —</div>
+            <div class="chart-sub" id="airChartSub">Клацніть по картці вище, щоб показати графік</div>
+          </div>
+          <canvas id="airChart"></canvas>
+          <div class="hint">Прогноз OpenWeather Air Pollution (щогодини). Відображено найближчі 24 години.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== TAB: Map ====== -->
+    <section id="tab-map" class="tab-content" role="tabpanel">
+      <div class="panel">
+        <div class="section-title">Локація моніторингу: Затишшя</div>
+        <div id="map"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div>Виконавець: <b>Роман Плетюк</b></div>
+    <div class="small">© 2026 • Моніторинг довкілля • Навчальний/інформаційний проєкт</div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // --------- КОНФІГ ---------
+    const lat = 50.025568493528525;
+    const lon = 25.551977585581156;
+    const API_KEY = "c91234ddc97f9cf6bb58824bdac07bf3";
+
+    const lastUpdateDiv = document.getElementById("lastUpdate");
+    const panelCards = document.getElementById("panel-cards");
+    const weatherCards = document.getElementById("weather-cards");
+    const airCards = document.getElementById("air-cards");
+
+    const weatherChartTitle = document.getElementById("weatherChartTitle");
+    const weatherChartSub   = document.getElementById("weatherChartSub");
+    const airChartTitle     = document.getElementById("airChartTitle");
+    const airChartSub       = document.getElementById("airChartSub");
+
+    let weatherChartInstance = null;
+    let airChartInstance = null;
+
+    // Кеш прогнозів
+    let weatherForecastCache = null; // api /forecast
+    let airForecastCache = null;     // api /air_pollution/forecast
+
+    // --------- ЧАС ОНОВЛЕННЯ ---------
+    function updateTime() {
+      const now = new Date();
+      lastUpdateDiv.innerHTML = "Станом на: <b>" + now.toLocaleString('uk-UA') + "</b>";
+    }
+
+    // --------- КЛАСИ ДЛЯ AQI ---------
+    function aqiText(aqi) {
+      return ["", "Добре", "Нормально", "Середнє", "Погано", "Дуже погано"][aqi] || "—";
+    }
+    function aqiClass(aqi) {
+      if (aqi <= 2) return "good";
+      if (aqi === 3) return "medium";
+      return "bad";
+    }
+
+    // --------- УТИЛІТИ ---------
+    const fmtHour = ts => new Date(ts).toLocaleTimeString('uk-UA', { hour: '2-digit' });
+    const fmtHourMin = ts => new Date(ts).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+    const safe = v => (v ?? "—");
+    const asRGBA = (hex, a) => {
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+
+    // --------- ТАБИ ---------
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = {
+      panel: document.getElementById("tab-panel"),
+      weather: document.getElementById("tab-weather"),
+      air: document.getElementById("tab-air"),
+      map: document.getElementById("tab-map"),
+    };
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach(b => b.classList.remove("active"));
+        Object.values(tabContents).forEach(el => el.classList.remove("active"));
+        btn.classList.add("active");
+        const id = btn.dataset.tab;
+        tabContents[id].classList.add("active");
+        // Ліниве завантаження
+        if (id === "weather") ensureWeatherLoaded();
+        if (id === "air") ensureAirLoaded();
+        if (id === "map") ensureMapLoaded();
+      });
+    });
+
+    // --------- MAP (Leaflet) ---------
+    let mapInstance = null; // глобальна змінна, щоб не перевизначати
+    let mapInitialized = false;
+
+    function ensureMapLoaded() {
+      // Якщо мапа ще не створена — створимо
+      if (!mapInitialized) {
+        mapInitialized = true;
+        mapInstance = L.map('map').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
+        L.marker([lat, lon]).addTo(mapInstance).bindPopup("Затишшя").openPopup();
+      }
+      // Коли вкладка стає видимою — оновити розмір
+      requestAnimationFrame(() => {
+        mapInstance.invalidateSize();
+        setTimeout(() => mapInstance.invalidateSize(), 150);
+      });
+    }
+
+    // --------- API ---------
+    async function fetchJSON(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    }
+
+    async function getWeatherNow() {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`;
+      return await fetchJSON(url);
+    }
+
+    async function getWeatherForecast() {
+      if (weatherForecastCache) return weatherForecastCache;
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`;
+      weatherForecastCache = await fetchJSON(url);
+      return weatherForecastCache;
+    }
+
+    async function getAirNow() {
+      const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+      return await fetchJSON(url);
+    }
+
+    async function getAirForecast() {
+      if (airForecastCache) return airForecastCache;
+      const url = `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+      airForecastCache = await fetchJSON(url);
+      return airForecastCache;
+    }
+
+    // ============== МЕТРИКИ ДЛЯ ГРАФІКІВ =================
+
+    // ПОГОДА (forecast)
+    const WEATHER_METRICS = {
+      // "temp" — особливий випадок: показує 2 лінії (температура + відчувається)
+      temp:       { label: 'Температура',           color: '#ef4444', unit: '°C',  extractor: i => i.main?.temp },
+      feels_like: { label: 'Відчувається',          color: '#f97316', unit: '°C',  extractor: i => i.main?.feels_like },
+      humidity:   { label: 'Вологість (%)',         color: '#3b82f6', unit: '%',   extractor: i => i.main?.humidity },
+      pressure:   { label: 'Тиск (гПа)',            color: '#6366f1', unit: 'гПа', extractor: i => i.main?.pressure },
+      wind:       { label: 'Вітер (м/с)',           color: '#10b981', unit: 'м/с', extractor: i => i.wind?.speed },
+      clouds:     { label: 'Хмарність (%)',         color: '#6b7280', unit: '%',   extractor: i => i.clouds?.all },
+    };
+
+    // ПОВІТРЯ (air forecast)
+    const AIR_METRICS = {
+      aqi:   { label: 'AQI (1–5)',     color: '#f59e0b', unit: '',      extractor: i => i.main?.aqi, stepped: true, yMin: 0, yMax: 5 },
+      pm2_5: { label: 'PM2.5 (μг/м³)', color: '#8b5cf6', unit: 'μг/м³', extractor: i => i.components?.pm2_5 },
+      pm10:  { label: 'PM10 (μг/м³)',  color: '#10b981', unit: 'μг/м³', extractor: i => i.components?.pm10 },
+      no2:   { label: 'NO₂ (μг/м³)',   color: '#ef4444', unit: 'μг/м³', extractor: i => i.components?.no2 },
+      o3:    { label: 'O₃ (μг/м³)',    color: '#06b6d4', unit: 'μг/м³', extractor: i => i.components?.o3 },
+      so2:   { label: 'SO₂ (μг/м³)',   color: '#a3e635', unit: 'μг/м³', extractor: i => i.components?.so2 },
+      co:    { label: 'CO (μг/м³)',    color: '#f43f5e', unit: 'μг/м³', extractor: i => i.components?.co },
+      nh3:   { label: 'NH₃ (μг/м³)',   color: '#14b8a6', unit: 'μг/м³', extractor: i => i.components?.nh3 },
+    };
+
+    // ============== ПАНЕЛЬ (зведення) =================
+    async function loadPanel() {
+      try {
+        const [wNow, aNow] = await Promise.all([getWeatherNow(), getAirNow()]);
+        const sunrise = new Date(wNow.sys.sunrise * 1000).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+        const sunset  = new Date(wNow.sys.sunset  * 1000).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+        const aqi = aNow?.list?.[0]?.main?.aqi ?? 0;
+        const c = aNow?.list?.[0]?.components ?? {};
+
+        panelCards.innerHTML = `
+          <div class="card" title="Температура / відчувається">
+            <div class="label">🌡 Температура</div>
+            <div class="value">${safe(wNow.main?.temp)} °C / ${safe(wNow.main?.feels_like)} °C</div>
+          </div>
+          <div class="card" title="Вологість повітря, %">
+            <div class="label">💧 Вологість</div>
+            <div class="value">${safe(wNow.main?.humidity)} %</div>
+          </div>
+          <div class="card" title="Швидкість вітру, м/с">
+            <div class="label">🌬 Вітер</div>
+            <div class="value">${safe(wNow.wind?.speed)} м/с</div>
+          </div>
+          <div class="card" title="Атмосферний тиск, гПа">
+            <div class="label">🔽 Тиск</div>
+            <div class="value">${safe(wNow.main?.pressure)} гПа</div>
+          </div>
+          <div class="card" title="Опис поточної погоди">
+            <div class="label">🌤 Опис</div>
+            <div class="value">${safe(wNow.weather?.[0]?.description)}</div>
+          </div>
+          <div class="card" title="Час сходу/заходу сонця">
+            <div class="label">🌅 Схід / Захід</div>
+            <div class="value">${sunrise} / ${sunset}</div>
+          </div>
+          <div class="card ${aqiClass(aqi)}" title="AQI (1–5)">
+            <div class="label">🟢 Індекс якості повітря</div>
+            <div class="value">${aqiText(aqi)} (${aqi})</div>
+          </div>
+          <div class="card" title="PM2.5, μg/м³">
+            <div class="label">PM2.5</div>
+            <div class="value">${safe(c.pm2_5)} μг/м³</div>
+          </div>
+          <div class="card" title="PM10, μg/м³">
+            <div class="label">PM10</div>
+            <div class="value">${safe(c.pm10)} μг/м³</div>
+          </div>
+        `;
+        updateTime();
+      } catch (e) {
+        panelCards.innerHTML = `<div class="error">Не вдалося завантажити зведення. ${e.message}</div>`;
+      }
+    }
+
+    // ============== ПОГОДА (картки + кліки -> графік) =================
+    let weatherLoaded = false;
+    async function ensureWeatherLoaded() {
+      if (weatherLoaded) return;
+      weatherLoaded = true;
+      await loadWeatherCards();
+      // За замовчуванням покажемо графік температури (2 лінії)
+      activateMetricCard('weather', 'temp');
+    }
+
+    async function loadWeatherCards() {
+      try {
+        const w = await getWeatherNow();
+        const sunrise = new Date(w.sys.sunrise * 1000).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+        const sunset  = new Date(w.sys.sunset  * 1000).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
+
+        weatherCards.innerHTML = `
+          <div class="card metric-card" data-group="weather" data-metric="temp" title="Температура + відчувається">
+            <div class="label">🌡 Температура</div>
+            <div class="value">${safe(w.main?.temp)} °C / ${safe(w.main?.feels_like)} °C</div>
+          </div>
+          <div class="card metric-card" data-group="weather" data-metric="humidity" title="Вологість, %">
+            <div class="label">💧 Вологість</div>
+            <div class="value">${safe(w.main?.humidity)} %</div>
+          </div>
+          <div class="card metric-card" data-group="weather" data-metric="pressure" title="Тиск, гПа">
+            <div class="label">🔽 Тиск</div>
+            <div class="value">${safe(w.main?.pressure)} гПа</div>
+          </div>
+          <div class="card metric-card" data-group="weather" data-metric="wind" title="Швидкість вітру, м/с">
+            <div class="label">🌬 Вітер</div>
+            <div class="value">${safe(w.wind?.speed)} м/с</div>
+          </div>
+          <div class="card metric-card" data-group="weather" data-metric="clouds" title="Хмарність, %">
+            <div class="label">☁️ Хмарність</div>
+            <div class="value">${safe(w.clouds?.all)} %</div>
+          </div>
+          <div class="card" title="Схід/Захід сонця">
+            <div class="label">🌅 Схід / Захід</div>
+            <div class="value">${sunrise} / ${sunset}</div>
+          </div>
+        `;
+        attachMetricCardClicks();
+        updateTime();
+      } catch (e) {
+        weatherCards.innerHTML = `<div class="error">Не вдалося завантажити погоду. ${e.message}</div>`;
+      }
+    }
+
+    async function renderWeatherMetric(metricKey) {
+      const ctx = document.getElementById("weatherChart").getContext("2d");
+      try {
+        const f = await getWeatherForecast();
+        const slice = f.list.slice(0, 8); // ~24 години (крок 3 год)
+        const labels = slice.map(i => fmtHour(i.dt * 1000));
+
+        if (weatherChartInstance) weatherChartInstance.destroy();
+
+        if (metricKey === 'temp') {
+          // Подвійний графік: температура + відчувається
+          const temps = slice.map(i => WEATHER_METRICS.temp.extractor(i));
+          const feels = slice.map(i => WEATHER_METRICS.feels_like.extractor(i));
+
+          weatherChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Температура (°C)',
+                  data: temps,
+                  borderColor: '#ef4444',
+                  backgroundColor: asRGBA('#ef4444', 0.15),
+                  tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false
+                },
+                {
+                  label: 'Відчувається (°C)',
+                  data: feels,
+                  borderColor: '#f97316',
+                  backgroundColor: asRGBA('#f97316', 0.12),
+                  tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              interaction: { mode: 'index', intersect: false },
+              plugins: { legend: { position: 'top' } },
+              scales: {
+                y: { title: { display: true, text: '°C' }, grace: '10%' },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+
+          weatherChartTitle.textContent = 'Графік: Температура & Відчувається';
+          weatherChartSub.textContent = 'Найближчі ~24 години (крок 3 год)';
+        } else {
+          // Звичайний одиночний графік для інших метрик
+          const meta = WEATHER_METRICS[metricKey];
+          if (!meta) return;
+          const data = slice.map(i => meta.extractor(i)).map(v => (v != null ? +v : null));
+          weatherChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: meta.label, data, borderColor: meta.color, backgroundColor: asRGBA(meta.color, 0.18), pointRadius: 3, pointHoverRadius: 5, tension: 0.35, fill: true, spanGaps: true }] },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              interaction: { mode: 'index', intersect: false },
+              plugins: { legend: { display: false } },
+              scales: { x: { grid: { display: false } }, y: { title: { display: true, text: meta.unit || '' }, ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v }, grace: '10%' } }
+            }
+          });
+          weatherChartTitle.textContent = `Графік: ${meta.label}`;
+          weatherChartSub.textContent = 'Найближчі ~24 години (крок 3 год)';
+        }
+      } catch (e) {
+        const container = document.getElementById("tab-weather");
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.textContent = 'Не вдалося побудувати графік: ' + e.message;
+        container.appendChild(err);
+      }
+    }
+
+    // ============== ПОВІТРЯ (картки + кліки -> графік) =================
+    let airLoaded = false;
+    async function ensureAirLoaded() {
+      if (airLoaded) return;
+      airLoaded = true;
+      await loadAirCards();
+      // За замовчуванням покажемо PM2.5
+      activateMetricCard('air', 'pm2_5');
+    }
+
+    async function loadAirCards() {
+      try {
+        const d = await getAirNow();
+        const aqi = d?.list?.[0]?.main?.aqi ?? 0;
+        const c = d?.list?.[0]?.components ?? {};
+
+        airCards.innerHTML = `
+          <div class="card metric-card ${aqiClass(aqi)}" data-group="air" data-metric="aqi" title="AQI: 1–5">
+            <div class="label">🟢 Індекс якості повітря</div>
+            <div class="value">${aqiText(aqi)} (${aqi})</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="pm2_5" title="PM2.5, μg/м³">
+            <div class="label">PM2.5</div>
+            <div class="value">${safe(c.pm2_5)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="pm10" title="PM10, μg/м³">
+            <div class="label">PM10</div>
+            <div class="value">${safe(c.pm10)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="no2" title="NO₂, μg/м³">
+            <div class="label">NO₂</div>
+            <div class="value">${safe(c.no2)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="o3" title="O₃, μg/м³">
+            <div class="label">O₃</div>
+            <div class="value">${safe(c.o3)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="so2" title="SO₂, μg/м³">
+            <div class="label">SO₂</div>
+            <div class="value">${safe(c.so2)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="co" title="CO, μg/м³">
+            <div class="label">CO</div>
+            <div class="value">${safe(c.co)} μг/м³</div>
+          </div>
+          <div class="card metric-card" data-group="air" data-metric="nh3" title="NH₃, μg/м³">
+            <div class="label">NH₃</div>
+            <div class="value">${safe(c.nh3)} μг/м³</div>
+          </div>
+        `;
+        attachMetricCardClicks();
+        updateTime();
+      } catch (e) {
+        airCards.innerHTML = `<div class="error">Не вдалося завантажити якість повітря. ${e.message}</div>`;
+      }
+    }
+
+    async function renderAirMetric(metricKey) {
+      const meta = AIR_METRICS[metricKey];
+      if (!meta) return;
+
+      const ctx = document.getElementById("airChart").getContext("2d");
+      try {
+        const f = await getAirForecast();
+        const slice = (f.list || []).slice(0, 24); // 24 години (щогодини)
+        const labels = slice.map(i => fmtHourMin(i.dt * 1000));
+        const data = slice.map(i => meta.extractor(i)).map(v => (v != null ? +v : null));
+
+        if (airChartInstance) airChartInstance.destroy();
+
+        airChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: meta.label,
+              data,
+              borderColor: meta.color,
+              backgroundColor: asRGBA(meta.color, 0.18),
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              tension: meta.stepped ? 0 : 0.35,
+              fill: true,
+              spanGaps: true,
+              stepped: meta.stepped || false,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: {
+                title: { display: true, text: meta.unit || '' },
+                ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v },
+                suggestedMin: meta.yMin != null ? meta.yMin : undefined,
+                suggestedMax: meta.yMax != null ? meta.yMax : undefined,
+                grace: '10%'
+              }
+            }
+          }
+        });
+
+        airChartTitle.textContent = `Графік: ${meta.label}`;
+        airChartSub.textContent = 'Найближчі 24 години (щогодини)';
+      } catch (e) {
+        const container = document.getElementById("tab-air");
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.textContent = 'Не вдалося побудувати графік: ' + e.message;
+        container.appendChild(err);
+      }
+    }
+
+    // ============== КЛІКИ ПО КАРТКАХ =================
+    function attachMetricCardClicks() {
+      document.querySelectorAll('.metric-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const group = card.getAttribute('data-group');   // 'weather' | 'air'
+          const metric = card.getAttribute('data-metric'); // ключ метрики
+          activateMetricCard(group, metric);
+        });
+      });
+    }
+
+    function activateMetricCard(group, metric) {
+      // Зняти вибір з карток у групі
+      document.querySelectorAll(`.metric-card[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+      const current = document.querySelector(`.metric-card[data-group="${group}"][data-metric="${metric}"]`);
+      if (current) current.classList.add('selected');
+
+      // Перемалювати графік
+      if (group === 'weather') {
+        renderWeatherMetric(metric);
+      } else if (group === 'air') {
+        renderAirMetric(metric);
+      }
+    }
+
+    // --------- INIT ---------
+    (async function init() {
+      updateTime();
+      loadPanel();            // зведення
+      // решту вкладок підвантажимо за потреби (ліниво)
+    })();
+  </script>
+</body>
+</html>
