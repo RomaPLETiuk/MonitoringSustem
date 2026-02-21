@@ -37,7 +37,7 @@
     header h1 { margin: 4px 0 8px; font-weight: 700; }
     #lastUpdate { opacity: 0.95; }
 
-    .container { width: min(1100px, 95%); margin: 16px auto 24px; }
+    .container { width: min(1200px, 95%); margin: 16px auto 24px; }
 
     /* Tabs */
     .tabs {
@@ -54,10 +54,7 @@
     .tab-content.active { display: block; }
 
     /* Cards */
-    .cards {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
     .card {
       background: var(--card); border-radius: var(--radius);
       padding: 14px; box-shadow: var(--shadow); text-align: center;
@@ -73,20 +70,14 @@
 
     .good { color: #16a34a; } .medium { color: #eab308; } .bad { color: #ef4444; }
 
-    .section-title {
-      margin: 6px 0 14px; font-weight: 700; font-size: 18px;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .section-title { margin: 6px 0 14px; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
 
     .wrap { display: grid; gap: 16px; grid-template-columns: 1.2fr 1fr; }
     @media (max-width: 1024px) { .wrap { grid-template-columns: 1fr; } }
 
     .panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; }
 
-    .chart-panel-header {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-      margin: 0 0 8px;
-    }
+    .chart-panel-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
     .chart-title { font-weight: 700; }
     .chart-sub { color: var(--muted); font-size: 12px; }
 
@@ -95,48 +86,44 @@
     /* Map */
     #map { height: 440px; border-radius: var(--radius); box-shadow: var(--shadow); }
 
-    footer {
-      margin-top: auto; background: var(--brand-1); color: white;
-      text-align: center; padding: 12px; font-size: 14px;
-    }
+    footer { margin-top: auto; background: var(--brand-1); color: white; text-align: center; padding: 12px; font-size: 14px; }
     footer .small { font-size: 12px; opacity: 0.9; }
 
     .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
-    .error {
-      background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 10px;
-      border: 1px solid #fecaca;
-    }
+    .error { background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 10px; border: 1px solid #fecaca; }
     .loader { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
-    .dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--brand-1);
-      animation: blink 1.2s infinite;
-    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-1); animation: blink 1.2s infinite; }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); }
-      40% { opacity: 1; transform: scale(1); }
-    }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); } 40% { opacity: 1; transform: scale(1); } }
 
-    .legend {
-      display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted);
-    }
-    .legend .chip {
-      display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: #f3f4f6; border-radius: 999px;
-    }
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+    .legend .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: #f3f4f6; border-radius: 999px; }
     .legend .dot-chip { width: 10px; height: 10px; border-radius: 999px; }
+
+    /* Forecast cards */
+    .day-cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .day {
+      display: grid; gap: 6px; justify-items: center;
+    }
+    .day .day-date { font-weight: 700; }
+    .day .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; font-size: 13px; color: var(--muted); }
+    .temp-range { font-size: 18px; font-weight: 700; }
+    .pop { font-weight: 600; }
+    .wx-icon { width: 64px; height: 64px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>🌍 Моніторинг довкілля — Затишшя</h1>
+    <h1>🌍 Моніторинг довкілля — с. Затишшя</h1>
     <div id="lastUpdate">Станом на: —</div>
   </header>
 
   <div class="container">
-    <!-- Tabs -->
+    <!-- Tabs (Прогноз — другою по черзі) -->
     <div class="tabs" role="tablist">
       <button class="tab-btn active" data-tab="panel" role="tab" aria-selected="true">📊 Панель</button>
+      <button class="tab-btn" data-tab="forecast" role="tab">🗓️ Прогноз</button>
       <button class="tab-btn" data-tab="weather" role="tab">🌦️ Погода</button>
       <button class="tab-btn" data-tab="air" role="tab">🧪 Якість повітря</button>
       <button class="tab-btn" data-tab="map" role="tab">🗺️ Мапа</button>
@@ -166,6 +153,17 @@
             <li><b>Вітер</b>: 0–5 м/с — легкий, &gt;10 м/с — сильний.</li>
           </ul>
         </div>
+      </div>
+    </section>
+
+    <!-- ====== TAB: Forecast (Daily cards) ====== -->
+    <section id="tab-forecast" class="tab-content" role="tabpanel">
+      <div class="panel">
+        <div class="section-title">Прогноз на найближчі дні</div>
+        <div id="forecast-cards" class="day-cards">
+          <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Формую денні зведення…</div>
+        </div>
+        <div class="hint">Без платної підписки OpenWeather надає прогноз до <b>5 днів</b> з кроком 3 години (агреговано по днях нижче).</div>
       </div>
     </section>
 
@@ -212,7 +210,7 @@
     <!-- ====== TAB: Map ====== -->
     <section id="tab-map" class="tab-content" role="tabpanel">
       <div class="panel">
-        <div class="section-title">Локація моніторингу: Затишшя</div>
+        <div class="section-title">Локація моніторингу: с. Затишшя</div>
         <div id="map"></div>
       </div>
     </section>
@@ -236,6 +234,7 @@
     const panelCards = document.getElementById("panel-cards");
     const weatherCards = document.getElementById("weather-cards");
     const airCards = document.getElementById("air-cards");
+    const forecastCards = document.getElementById("forecast-cards");
 
     const weatherChartTitle = document.getElementById("weatherChartTitle");
     const weatherChartSub   = document.getElementById("weatherChartSub");
@@ -273,11 +272,26 @@
       const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
       return `rgba(${r},${g},${b},${a})`;
     };
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    // Приведення до локальної дати з урахуванням timeZoneOffset (секунд від UTC)
+    function ymdKeyFromUTC(dtSec, tzOffsetSec) {
+      const local = new Date((dtSec + tzOffsetSec) * 1000);
+      const y = local.getUTCFullYear();
+      const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(local.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    function prettyDayFromUTC(dtSec, tzOffsetSec) {
+      const local = new Date((dtSec + tzOffsetSec) * 1000);
+      return local.toLocaleDateString('uk-UA', { weekday: 'short', day: '2-digit', month: 'short' });
+    }
 
     // --------- ТАБИ ---------
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = {
       panel: document.getElementById("tab-panel"),
+      forecast: document.getElementById("tab-forecast"),
       weather: document.getElementById("tab-weather"),
       air: document.getElementById("tab-air"),
       map: document.getElementById("tab-map"),
@@ -291,6 +305,7 @@
         const id = btn.dataset.tab;
         tabContents[id].classList.add("active");
         // Ліниве завантаження
+        if (id === "forecast") ensureForecastLoaded();
         if (id === "weather") ensureWeatherLoaded();
         if (id === "air") ensureAirLoaded();
         if (id === "map") ensureMapLoaded();
@@ -298,60 +313,26 @@
     });
 
     // --------- MAP (Leaflet) ---------
-    let mapInstance = null; // глобальна змінна, щоб не перевизначати
-    let mapInitialized = false;
-
+    let mapInstance = null; let mapInitialized = false;
     function ensureMapLoaded() {
-      // Якщо мапа ще не створена — створимо
       if (!mapInitialized) {
         mapInitialized = true;
         mapInstance = L.map('map').setView([lat, lon], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
         L.marker([lat, lon]).addTo(mapInstance).bindPopup("Затишшя").openPopup();
       }
-      // Коли вкладка стає видимою — оновити розмір
-      requestAnimationFrame(() => {
-        mapInstance.invalidateSize();
-        setTimeout(() => mapInstance.invalidateSize(), 150);
-      });
+      requestAnimationFrame(() => { mapInstance.invalidateSize(); setTimeout(() => mapInstance.invalidateSize(), 150); });
     }
 
     // --------- API ---------
-    async function fetchJSON(url) {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return await r.json();
-    }
+    async function fetchJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return await r.json(); }
+    async function getWeatherNow() { const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`; return await fetchJSON(url); }
+    async function getWeatherForecast() { if (weatherForecastCache) return weatherForecastCache; const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`; weatherForecastCache = await fetchJSON(url); return weatherForecastCache; }
+    async function getAirNow() { const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`; return await fetchJSON(url); }
+    async function getAirForecast() { if (airForecastCache) return airForecastCache; const url = `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`; airForecastCache = await fetchJSON(url); return airForecastCache; }
 
-    async function getWeatherNow() {
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`;
-      return await fetchJSON(url);
-    }
-
-    async function getWeatherForecast() {
-      if (weatherForecastCache) return weatherForecastCache;
-      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=uk&appid=${API_KEY}`;
-      weatherForecastCache = await fetchJSON(url);
-      return weatherForecastCache;
-    }
-
-    async function getAirNow() {
-      const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
-      return await fetchJSON(url);
-    }
-
-    async function getAirForecast() {
-      if (airForecastCache) return airForecastCache;
-      const url = `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
-      airForecastCache = await fetchJSON(url);
-      return airForecastCache;
-    }
-
-    // ============== МЕТРИКИ ДЛЯ ГРАФІКІВ =================
-
-    // ПОГОДА (forecast)
+    // --------- МЕТРИКИ ---------
     const WEATHER_METRICS = {
-      // "temp" — особливий випадок: показує 2 лінії (температура + відчувається)
       temp:       { label: 'Температура',           color: '#ef4444', unit: '°C',  extractor: i => i.main?.temp },
       feels_like: { label: 'Відчувається',          color: '#f97316', unit: '°C',  extractor: i => i.main?.feels_like },
       humidity:   { label: 'Вологість (%)',         color: '#3b82f6', unit: '%',   extractor: i => i.main?.humidity },
@@ -359,8 +340,6 @@
       wind:       { label: 'Вітер (м/с)',           color: '#10b981', unit: 'м/с', extractor: i => i.wind?.speed },
       clouds:     { label: 'Хмарність (%)',         color: '#6b7280', unit: '%',   extractor: i => i.clouds?.all },
     };
-
-    // ПОВІТРЯ (air forecast)
     const AIR_METRICS = {
       aqi:   { label: 'AQI (1–5)',     color: '#f59e0b', unit: '',      extractor: i => i.main?.aqi, stepped: true, yMin: 0, yMax: 5 },
       pm2_5: { label: 'PM2.5 (μг/м³)', color: '#8b5cf6', unit: 'μг/м³', extractor: i => i.components?.pm2_5 },
@@ -372,7 +351,7 @@
       nh3:   { label: 'NH₃ (μг/м³)',   color: '#14b8a6', unit: 'μг/м³', extractor: i => i.components?.nh3 },
     };
 
-    // ============== ПАНЕЛЬ (зведення) =================
+    // --------- ПАНЕЛЬ ---------
     async function loadPanel() {
       try {
         const [wNow, aNow] = await Promise.all([getWeatherNow(), getAirNow()]);
@@ -382,7 +361,7 @@
         const c = aNow?.list?.[0]?.components ?? {};
 
         panelCards.innerHTML = `
-          <div class="card" title="Температура / відчувається">
+          <div class="card" title="Температура + відчувається">
             <div class="label">🌡 Температура</div>
             <div class="value">${safe(wNow.main?.temp)} °C / ${safe(wNow.main?.feels_like)} °C</div>
           </div>
@@ -420,20 +399,12 @@
           </div>
         `;
         updateTime();
-      } catch (e) {
-        panelCards.innerHTML = `<div class="error">Не вдалося завантажити зведення. ${e.message}</div>`;
-      }
+      } catch (e) { panelCards.innerHTML = `<div class="error">Не вдалося завантажити зведення. ${e.message}</div>`; }
     }
 
-    // ============== ПОГОДА (картки + кліки -> графік) =================
+    // --------- ПОГОДА ---------
     let weatherLoaded = false;
-    async function ensureWeatherLoaded() {
-      if (weatherLoaded) return;
-      weatherLoaded = true;
-      await loadWeatherCards();
-      // За замовчуванням покажемо графік температури (2 лінії)
-      activateMetricCard('weather', 'temp');
-    }
+    async function ensureWeatherLoaded() { if (weatherLoaded) return; weatherLoaded = true; await loadWeatherCards(); activateMetricCard('weather', 'temp'); }
 
     async function loadWeatherCards() {
       try {
@@ -469,9 +440,7 @@
         `;
         attachMetricCardClicks();
         updateTime();
-      } catch (e) {
-        weatherCards.innerHTML = `<div class="error">Не вдалося завантажити погоду. ${e.message}</div>`;
-      }
+      } catch (e) { weatherCards.innerHTML = `<div class="error">Не вдалося завантажити погоду. ${e.message}</div>`; }
     }
 
     async function renderWeatherMetric(metricKey) {
@@ -484,87 +453,96 @@
         if (weatherChartInstance) weatherChartInstance.destroy();
 
         if (metricKey === 'temp') {
-          // Подвійний графік: температура + відчувається
           const temps = slice.map(i => WEATHER_METRICS.temp.extractor(i));
           const feels = slice.map(i => WEATHER_METRICS.feels_like.extractor(i));
-
           weatherChartInstance = new Chart(ctx, {
             type: 'line',
-            data: {
-              labels,
-              datasets: [
-                {
-                  label: 'Температура (°C)',
-                  data: temps,
-                  borderColor: '#ef4444',
-                  backgroundColor: asRGBA('#ef4444', 0.15),
-                  tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false
-                },
-                {
-                  label: 'Відчувається (°C)',
-                  data: feels,
-                  borderColor: '#f97316',
-                  backgroundColor: asRGBA('#f97316', 0.12),
-                  tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              interaction: { mode: 'index', intersect: false },
-              plugins: { legend: { position: 'top' } },
-              scales: {
-                y: { title: { display: true, text: '°C' }, grace: '10%' },
-                x: { grid: { display: false } }
-              }
-            }
+            data: { labels, datasets: [
+              { label: 'Температура (°C)', data: temps, borderColor: '#ef4444', backgroundColor: asRGBA('#ef4444', 0.15), tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false },
+              { label: 'Відчувається (°C)', data: feels, borderColor: '#f97316', backgroundColor: asRGBA('#f97316', 0.12), tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false },
+            ]},
+            options: { responsive: true, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'top' } }, scales: { y: { title: { display: true, text: '°C' }, grace: '10%' }, x: { grid: { display: false } } } }
           });
-
           weatherChartTitle.textContent = 'Графік: Температура & Відчувається';
           weatherChartSub.textContent = 'Найближчі ~24 години (крок 3 год)';
         } else {
-          // Звичайний одиночний графік для інших метрик
-          const meta = WEATHER_METRICS[metricKey];
-          if (!meta) return;
+          const meta = WEATHER_METRICS[metricKey]; if (!meta) return;
           const data = slice.map(i => meta.extractor(i)).map(v => (v != null ? +v : null));
           weatherChartInstance = new Chart(ctx, {
             type: 'line',
             data: { labels, datasets: [{ label: meta.label, data, borderColor: meta.color, backgroundColor: asRGBA(meta.color, 0.18), pointRadius: 3, pointHoverRadius: 5, tension: 0.35, fill: true, spanGaps: true }] },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              interaction: { mode: 'index', intersect: false },
-              plugins: { legend: { display: false } },
-              scales: { x: { grid: { display: false } }, y: { title: { display: true, text: meta.unit || '' }, ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v }, grace: '10%' } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { title: { display: true, text: meta.unit || '' }, ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v }, grace: '10%' } } }
           });
           weatherChartTitle.textContent = `Графік: ${meta.label}`;
           weatherChartSub.textContent = 'Найближчі ~24 години (крок 3 год)';
         }
       } catch (e) {
-        const container = document.getElementById("tab-weather");
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.textContent = 'Не вдалося побудувати графік: ' + e.message;
-        container.appendChild(err);
+        document.getElementById("tab-weather").insertAdjacentHTML('beforeend', `<div class="error">Не вдалося побудувати графік: ${e.message}</div>`);
       }
     }
 
-    // ============== ПОВІТРЯ (картки + кліки -> графік) =================
-    let airLoaded = false;
-    async function ensureAirLoaded() {
-      if (airLoaded) return;
-      airLoaded = true;
-      await loadAirCards();
-      // За замовчуванням покажемо PM2.5
-      activateMetricCard('air', 'pm2_5');
+    // --------- ПРОГНОЗ (агрегація по днях) ---------
+    let forecastLoaded = false;
+    async function ensureForecastLoaded() { if (forecastLoaded) return; forecastLoaded = true; await loadForecastCards(); }
+
+    async function loadForecastCards() {
+      try {
+        const f = await getWeatherForecast();
+        const tzOffset = f.city?.timezone || 0; // у секундах
+        const byDay = new Map();
+        f.list.forEach(item => {
+          const key = ymdKeyFromUTC(item.dt, tzOffset);
+          const arr = byDay.get(key) || []; arr.push(item); byDay.set(key, arr);
+        });
+        // беремо максимум 5 днів
+        const keys = Array.from(byDay.keys()).sort().slice(0, 5);
+        const days = keys.map(k => {
+          const items = byDay.get(k);
+          // вибір представницького запису близько полудня (12:00 лок.)
+          let pick = items[0];
+          let bestDiff = Infinity;
+          items.forEach(i => { const localHour = new Date((i.dt + tzOffset)*1000).getUTCHours(); const diff = Math.abs(localHour - 12); if (diff < bestDiff) { bestDiff = diff; pick = i; } });
+          const tempsMin = Math.min(...items.map(i => (i.main?.temp_min ?? i.main?.temp)));
+          const tempsMax = Math.max(...items.map(i => (i.main?.temp_max ?? i.main?.temp)));
+          const humAvg = Math.round(items.reduce((s,i)=>s+(i.main?.humidity??0),0) / items.length);
+          const windMax = Math.max(...items.map(i => (i.wind?.speed ?? 0)));
+          const popMax = Math.round(Math.max(...items.map(i => (i.pop ?? 0))) * 100);
+          const rainSum = items.reduce((s,i)=> s + (i.rain?.['3h'] ?? 0), 0);
+          const snowSum = items.reduce((s,i)=> s + (i.snow?.['3h'] ?? 0), 0);
+          const precipSum = +(rainSum + snowSum).toFixed(1);
+          const icon = pick.weather?.[0]?.icon || '01d';
+          const desc = pick.weather?.[0]?.description || '';
+          const pretty = prettyDayFromUTC(items[0].dt, tzOffset);
+          return { key: k, pretty, icon, desc, tmin: Math.round(tempsMin), tmax: Math.round(tempsMax), humAvg, windMax: +windMax.toFixed(1), popMax, precipSum };
+        });
+
+        forecastCards.innerHTML = days.map(d => `
+          <div class="card day" title="${d.desc}">
+            <div class="day-date">${d.pretty}</div>
+            <img class="wx-icon" alt="ico" src="https://openweathermap.org/img/wn/${d.icon}@2x.png"/>
+            <div class="temp-range">${d.tmax}° / ${d.tmin}°C</div>
+            <div class="value" style="margin-top:2px; text-transform: capitalize;">${d.desc}</div>
+            <div class="meta">
+              <div>💧 ${d.humAvg}%</div>
+              <div>🌬 ${d.windMax} м/с</div>
+              <div class="pop">🌧️ ${d.popMax}%</div>
+              <div>☔ ${d.precipSum} мм</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        forecastCards.innerHTML = `<div class="error">Не вдалося завантажити прогноз: ${e.message}</div>`;
+      }
     }
+
+    // --------- ПОВІТРЯ ---------
+    let airLoaded = false;
+    async function ensureAirLoaded() { if (airLoaded) return; airLoaded = true; await loadAirCards(); activateMetricCard('air', 'pm2_5'); }
 
     async function loadAirCards() {
       try {
         const d = await getAirNow();
-        const aqi = d?.list?.[0]?.main?.aqi ?? 0;
-        const c = d?.list?.[0]?.components ?? {};
-
+        const aqi = d?.list?.[0]?.main?.aqi ?? 0; const c = d?.list?.[0]?.components ?? {};
         airCards.innerHTML = `
           <div class="card metric-card ${aqiClass(aqi)}" data-group="air" data-metric="aqi" title="AQI: 1–5">
             <div class="label">🟢 Індекс якості повітря</div>
@@ -601,103 +579,42 @@
         `;
         attachMetricCardClicks();
         updateTime();
-      } catch (e) {
-        airCards.innerHTML = `<div class="error">Не вдалося завантажити якість повітря. ${e.message}</div>`;
-      }
+      } catch (e) { airCards.innerHTML = `<div class=\"error\">Не вдалося завантажити якість повітря. ${e.message}</div>`; }
     }
 
     async function renderAirMetric(metricKey) {
-      const meta = AIR_METRICS[metricKey];
-      if (!meta) return;
-
+      const meta = AIR_METRICS[metricKey]; if (!meta) return;
       const ctx = document.getElementById("airChart").getContext("2d");
       try {
         const f = await getAirForecast();
-        const slice = (f.list || []).slice(0, 24); // 24 години (щогодини)
-        const labels = slice.map(i => fmtHourMin(i.dt * 1000));
+        const slice = (f.list || []).slice(0, 24); const labels = slice.map(i => fmtHourMin(i.dt * 1000));
         const data = slice.map(i => meta.extractor(i)).map(v => (v != null ? +v : null));
-
         if (airChartInstance) airChartInstance.destroy();
-
-        airChartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: meta.label,
-              data,
-              borderColor: meta.color,
-              backgroundColor: asRGBA(meta.color, 0.18),
-              pointRadius: 3,
-              pointHoverRadius: 5,
-              tension: meta.stepped ? 0 : 0.35,
-              fill: true,
-              spanGaps: true,
-              stepped: meta.stepped || false,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              legend: { display: false },
-            },
-            scales: {
-              x: { grid: { display: false } },
-              y: {
-                title: { display: true, text: meta.unit || '' },
-                ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v },
-                suggestedMin: meta.yMin != null ? meta.yMin : undefined,
-                suggestedMax: meta.yMax != null ? meta.yMax : undefined,
-                grace: '10%'
-              }
-            }
-          }
-        });
-
-        airChartTitle.textContent = `Графік: ${meta.label}`;
-        airChartSub.textContent = 'Найближчі 24 години (щогодини)';
-      } catch (e) {
-        const container = document.getElementById("tab-air");
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.textContent = 'Не вдалося побудувати графік: ' + e.message;
-        container.appendChild(err);
-      }
+        airChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: meta.label, data, borderColor: meta.color, backgroundColor: asRGBA(meta.color, 0.18), pointRadius: 3, pointHoverRadius: 5, tension: meta.stepped ? 0 : 0.35, fill: true, spanGaps: true, stepped: meta.stepped || false }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { title: { display: true, text: meta.unit || '' }, ticks: { callback: (v) => meta.unit ? `${v} ${meta.unit}` : v }, suggestedMin: meta.yMin != null ? meta.yMin : undefined, suggestedMax: meta.yMax != null ? meta.yMax : undefined, grace: '10%' } } } });
+        airChartTitle.textContent = `Графік: ${meta.label}`; airChartSub.textContent = 'Найближчі 24 години (щогодини)';
+      } catch (e) { document.getElementById("tab-air").insertAdjacentHTML('beforeend', `<div class="error">Не вдалося побудувати графік: ${e.message}</div>`); }
     }
 
-    // ============== КЛІКИ ПО КАРТКАХ =================
+    // --------- КЛІКИ ПО КАРТКАХ ---------
     function attachMetricCardClicks() {
       document.querySelectorAll('.metric-card').forEach(card => {
         card.addEventListener('click', () => {
-          const group = card.getAttribute('data-group');   // 'weather' | 'air'
-          const metric = card.getAttribute('data-metric'); // ключ метрики
+          const group = card.getAttribute('data-group');
+          const metric = card.getAttribute('data-metric');
           activateMetricCard(group, metric);
         });
       });
     }
-
     function activateMetricCard(group, metric) {
-      // Зняти вибір з карток у групі
       document.querySelectorAll(`.metric-card[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
       const current = document.querySelector(`.metric-card[data-group="${group}"][data-metric="${metric}"]`);
       if (current) current.classList.add('selected');
-
-      // Перемалювати графік
-      if (group === 'weather') {
-        renderWeatherMetric(metric);
-      } else if (group === 'air') {
-        renderAirMetric(metric);
-      }
+      if (group === 'weather') renderWeatherMetric(metric);
+      if (group === 'air') renderAirMetric(metric);
     }
 
     // --------- INIT ---------
-    (async function init() {
-      updateTime();
-      loadPanel();            // зведення
-      // решту вкладок підвантажимо за потреби (ліниво)
-    })();
+    (async function init() { updateTime(); loadPanel(); })();
   </script>
 </body>
 </html>
